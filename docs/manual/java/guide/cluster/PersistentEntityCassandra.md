@@ -70,6 +70,18 @@ With these properties set to `false`, if the keyspaces or tables are missing at 
 
 Lagom's Cassandra support is provided by the [`akka-persistence-cassandra`](https://doc.akka.io/docs/akka-persistence-cassandra/0.100/) plugin. A full configuration reference is available in the plugin's [`reference.conf`](https://github.com/akka/akka-persistence-cassandra/blob/v0.100/core/src/main/resources/reference.conf).
 
+### Important Note Regarding `lagom-persistence-cassandra` Configuration
+
+While persistent entities store their events in a journal, the initial offset scanning for persisted events is different from [akka-persistence's configuration](https://doc.akka.io/docs/akka-persistence-cassandra/current/events-by-tag.html) such that the initial offset is *overridden* by [lagom-persistence-cassandra](https://github.com/lagom/lagom/blob/master/persistence-cassandra/core/src/main/resources/play/reference-overrides.conf):
+```conf
+cassandra-query-journal {
+  first-time-bucket = "20160225T00:00"
+
+  plugin-dispatcher = "lagom.persistence.dispatcher"
+}
+```
+This configuration value does introduce a significant delay in event stream handling *at first system startup of the cluster* due to the intrinsic scan for all events since the predefined offset! It's recommended to set the first-time-bucket to a timestamp relevant to project initial-start time.
+
 ## Cassandra Location
 
 Lagom will start an embedded Cassandra server when running in developer mode. You can review the configuration options or how to disable the embedded server in the section on Cassandra Server in [[Running Lagom in development|CassandraServer]].
